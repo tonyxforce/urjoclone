@@ -7,3 +7,6 @@ puzzle.renderPuzzle("gameHolder");
 puzzle.setWinCallback(() => {
     alert("You win with " + puzzle.getMistakeCount() + " mistakes.");
 });
+puzzle.setMistakeCallback(()=>{
+    alert("Wrong move!");
+})

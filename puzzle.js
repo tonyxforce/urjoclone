@@ -3,6 +3,7 @@ class Puzzle {
     decodedPuzzle;
     #mistakes = 0;
     #completedCells = 0;
+    #mistakeCallback = function(){};
     #winCallback = function () { };
 
     // Class constructor
@@ -21,6 +22,12 @@ class Puzzle {
     // @Param {function} callback - The callback function
     setWinCallback(callback) {
         this.#winCallback = callback;
+    }
+
+    // Set the callback function to be called when a mistake is made
+    // @Param {function} callback - The callback function
+    setMistakeCallback(callback){
+        this.#mistakeCallback = callback;
     }
 
     // Get number of mistakes made by the player
@@ -179,6 +186,8 @@ class Puzzle {
             if (!clickedCell.classList.contains("cell-UR")) {
                 document.getElementById("red-" + cellId).style.backgroundColor = "#00000000";
                 document.getElementById("red-" + cellId).disabled = true;
+                
+                this.#mistakeCallback(this.#mistakes);
                 this.#mistakes += 1;
                 return;
             }
@@ -192,6 +201,8 @@ class Puzzle {
             if (!clickedCell.classList.contains("cell-UB")) {
                 document.getElementById("blue-" + cellId).style.backgroundColor = "#00000000";
                 document.getElementById("blue-" + cellId).disabled = true;
+                
+                this.#mistakeCallback(this.#mistakes);
                 this.#mistakes += 1;
                 return;
             }
