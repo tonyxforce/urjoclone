@@ -92,20 +92,26 @@ class Puzzle {
     // @Param {string} elementId - The id of the HTML element to render the puzzle into
     renderPuzzle(elementId) {
         var gameHolder = document.getElementById(elementId);
+        gameHolder.innerHTML = "";
+
         var size = this.getSize();
         for (let x = 0; x < size; x++) {
+        
             var cellRow = document.createElement("div");
             cellRow.classList.add("cell-row");
+        
             for (let y = 0; y < size; y++) {
                 var id = x * size + y;
                 var cell = document.createElement("div");
+
                 cell.classList.add("cell");
                 cell.id = "cell-" + id;
-                var char = puzzle.getCellValue(id);
+                
+                var char = this.getCellValue(id);
                 var cellNumber = Math.floor(char / 4) - 1
+                
                 var cellLabel = document.createElement("span");
                 cellLabel.classList.add("cell-label");
-
                 cellLabel.innerText = ""
                 if (cellNumber >= 0) {
                     cellLabel.innerText = cellNumber;
@@ -126,10 +132,10 @@ class Puzzle {
                 cellButtonBlue.id = "blue-" + id;
 
                 cellButtonRed.addEventListener("click", (e) => {
-                    this.#buttonClick(e.target, 'red');
+                    this.#buttonClick(e.target);
                 });
                 cellButtonBlue.addEventListener("click", (e) => {
-                    this.#buttonClick(e.target, 'blue');
+                    this.#buttonClick(e.target);
                 });
 
                 cell.appendChild(cellLabel);
@@ -165,33 +171,35 @@ class Puzzle {
     // Internal function that handles button clicks
     // @Param {HTMLElement} cellBtn - The button element that was clicked
     // @Param {string} color - The color associated with the button click ('red' or 'blue')
-    #buttonClick(cellBtn, color) {
-        var clickedCell = document.getElementById("cell-" + cellBtn.id.split("-")[1]);
+    #buttonClick(cellBtn) {
+        var cellId = cellBtn.id.split("-")[1];
+        var clickedCell = document.getElementById("cell-" + cellId);
+        var color = cellBtn.id.split("-")[0];
         if (color === 'red') {
             if (!clickedCell.classList.contains("cell-UR")) {
-                document.getElementById("red-" + cellBtn.id.split("-")[1]).style.backgroundColor = "#00000000";
-                document.getElementById("red-" + cellBtn.id.split("-")[1]).disabled = true;
+                document.getElementById("red-" + cellId).style.backgroundColor = "#00000000";
+                document.getElementById("red-" + cellId).disabled = true;
                 this.#mistakes += 1;
                 return;
             }
-            this.#completedCells += 1;
-            clickedCell.classList.remove("cell-UR");
             clickedCell.classList.add("cell-red");
-            clickedCell.removeChild(document.getElementById("red-" + cellBtn.id.split("-")[1]));
-            clickedCell.removeChild(document.getElementById("blue-" + cellBtn.id.split("-")[1]));
+            clickedCell.classList.remove("cell-UR");
+            clickedCell.removeChild(document.getElementById("red-" + cellId));
+            clickedCell.removeChild(document.getElementById("blue-" + cellId));
+            this.#completedCells += 1;
         }
         if (color === 'blue') {
             if (!clickedCell.classList.contains("cell-UB")) {
-                document.getElementById("blue-" + cellBtn.id.split("-")[1]).style.backgroundColor = "#00000000";
-                document.getElementById("blue-" + cellBtn.id.split("-")[1]).disabled = true;
+                document.getElementById("blue-" + cellId).style.backgroundColor = "#00000000";
+                document.getElementById("blue-" + cellId).disabled = true;
                 this.#mistakes += 1;
                 return;
             }
-            this.#completedCells += 1;
-            clickedCell.classList.remove("cell-UB");
             clickedCell.classList.add("cell-blue");
-            clickedCell.removeChild(document.getElementById("red-" + cellBtn.id.split("-")[1]));
-            clickedCell.removeChild(document.getElementById("blue-" + cellBtn.id.split("-")[1]));
+            clickedCell.classList.remove("cell-UB");
+            clickedCell.removeChild(document.getElementById("red-" + cellId));
+            clickedCell.removeChild(document.getElementById("blue-" + cellId));
+            this.#completedCells += 1;
         }
         if (this.#completedCells === this.getSize() ** 2) {
             setTimeout(this.#winCallback, 100);
