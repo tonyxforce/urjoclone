@@ -25,7 +25,7 @@ class Puzzle {
 
     // Get number of mistakes made by the player
     // @Returns {number} - number of mistakes
-    getMistakes(){
+    getMistakeCount(){
         return this.#mistakes;
     }
 
