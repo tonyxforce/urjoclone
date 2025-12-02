@@ -76,7 +76,7 @@ class Puzzle {
 
     // Randomly rotates, mirrors, or inverts the puzzle to create a new variation
     // @Param {mirror: boolean, invert: boolean, rotate: number} options - Options for shuffling
-    shuffle(options) {
+    shuffle(options = {}) {
         var rotationAmount = options.rotate ?? Math.floor(Math.random() * 3);
         const doMirror = options.mirror ?? Math.round(Math.random());
         const doInvert = options.invert ?? Math.round(Math.random());

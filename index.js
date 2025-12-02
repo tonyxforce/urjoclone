@@ -3,8 +3,9 @@ var gameString = url.searchParams.get("game");
 
 var puzzle = new Puzzle(gameString);
 
-puzzle.render("gameHolder");
 puzzle.shuffle();
+puzzle.render("gameHolder");
+
 puzzle.setWinCallback(() => {
     alert("You win with " + puzzle.getMistakeCount() + " mistakes.");
 });
