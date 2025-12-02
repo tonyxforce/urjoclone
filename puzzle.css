@@ -1,0 +1,82 @@
+.cell {
+    width: 100px;
+    height: 100px;
+    border: 1px solid black;
+    background-color: #ccc;
+    border-radius: 15px;
+
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column-reverse;
+
+    margin: 0px;
+    padding: 0px;
+}
+
+.cell-red {
+    background-color: #e54e3e;
+}
+
+.cell-blue {
+    background-color: #3897d7;
+}
+
+#gameHolder {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    text-wrap-mode: nowrap;
+}
+
+.cell-row {
+    height: 102px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    text-wrap-mode: nowrap;
+}
+
+.cell-label {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 67px;
+    height: 67px;
+    display: inline;
+    position: absolute;
+    pointer-events: none;
+}
+
+.cell-btn {
+    width: 100px;
+    height: 50px;
+    border: none;
+    border-radius: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+    position: relative;
+    display: block;
+    min-height: 50px;
+    max-height: 50px;
+}
+
+.cell-btn-red {
+    bottom: 0px;
+    background-color: #e54e3e55;
+    border-radius: 0 0 15px 15px;
+}
+
+.cell-btn-red:hover {
+    background-color: #e54e3e77;
+}
+
+.cell-btn-blue {
+    top: 0px;
+    background-color: #3897d755;
+    border-radius: 15px 15px 0px 0px;
+}
+
+.cell-btn-blue:hover {
+    background-color: #3897d777;
+}
