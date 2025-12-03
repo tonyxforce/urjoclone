@@ -16,9 +16,15 @@ class Puzzle {
         if (puzzleString.startsWith("$")) {
             // format $<sizeX>$<sizeY>$<puzzleString>, but also do validation
             const parts = puzzleString.split("$");
-            if (parts.length < 3) {
+            if (parts.length < 2) {
                 console.error("Invalid puzzle string format");
             } else {
+                if(parts.length == 2){
+                    // Creative mode square
+                    this.sizeX = parseInt(parts[1]);
+                    this.sizeY = this.sizeX;
+                    puzzleString = new Array(this.sizeX * this.sizeY).fill("0").join("");
+                }else
                 if (parts.length == 3) {
                     // Creative mode
                     this.#isCreativeMode = true;
