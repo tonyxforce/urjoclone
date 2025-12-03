@@ -21,6 +21,7 @@ class Puzzle {
             } else {
                 if(parts.length == 2){
                     // Creative mode square
+                    this.#isCreativeMode = true;
                     this.sizeX = parseInt(parts[1]);
                     this.sizeY = this.sizeX;
                     puzzleString = new Array(this.sizeX * this.sizeY).fill("0").join("");
