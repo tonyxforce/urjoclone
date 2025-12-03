@@ -254,7 +254,6 @@ class Puzzle {
 
                 var char = this.getCellValue(id);
                 var cellNumber = Math.floor(char / 4) - 1
-                console.log({ id, char });
 
                 var cellLabel = document.createElement("span");
                 cellLabel.classList.add("cell-label");
@@ -262,8 +261,6 @@ class Puzzle {
                 if (cellNumber >= 0) {
                     cellLabel.innerText = cellNumber;
                 }
-
-                cellLabel.style.zIndex = "1";
 
                 var cellButtonRed = document.createElement("button");
                 cellButtonRed.classList.add("cell-btn-red");
