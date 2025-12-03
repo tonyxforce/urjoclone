@@ -1,24 +1,54 @@
 class Puzzle {
-    puzzleString;
+    #puzzleString;
     decodedPuzzle;
     #mistakes = 0;
     #completedCells = 0;
     #shownCellsIDs = [];
     #isCreativeMode = false;
+    #sizeX = 0;
+    #sizeY = 0;
     #mistakeCallback = function () { };
     #winCallback = function () { };
 
     // Class constructor
     // @Param {string} puzzleString - The puzzle string to decode
     constructor(puzzleString) {
-        if (typeof puzzleString == "number") {
-            puzzleString = new Array(puzzleString ** 2).fill("0").join("");
-            this.#isCreativeMode = true;
+        if (puzzleString.startsWith("$")) {
+            // format $<sizeX>$<sizeY>$<puzzleString>, but also do validation
+            const parts = puzzleString.split("$");
+            if (parts.length < 3) {
+                console.error("Invalid puzzle string format");
+            } else {
+                if (parts.length == 3) {
+                    // Creative mode
+                    this.#isCreativeMode = true;
+                    this.#sizeX = parseInt(parts[1]);
+                    this.#sizeY = parseInt(parts[2]);
+                    puzzleString = new Array(this.#sizeX * this.#sizeY).fill("0").join("");
+                } else {
+
+                    this.#sizeX = parseInt(parts[1]);
+                    this.#sizeY = parseInt(parts[2]);
+
+                    // additional validation to check sizeX and sizeY are valid numbers
+                    if (isNaN(this.#sizeX) || isNaN(this.#sizeY) || this.#sizeX <= 0 || this.#sizeY <= 0) {
+                        console.error("Invalid puzzle size in puzzle string, defaulting to square based on length");
+                        this.#sizeX = Math.sqrt(parts[3].length);
+                        this.#sizeY = this.#sizeX;
+                    } else {
+                        puzzleString = parts[3];
+                    }
+                }
+            }
         }
-        this.puzzleString = puzzleString;
+        this.#puzzleString = puzzleString;
+        if (this.#sizeX == 0 || this.#sizeY == 0) {
+            this.#sizeX = Math.sqrt(puzzleString.length);
+            this.#sizeY = this.#sizeX;
+        }
         const base36Chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
         const result = [];
-        for (var i = 0; i < puzzleString.length; i++) {
+        for (var i = 0; i < this.#puzzleString.length; i++) {
             result.push(base36Chars.indexOf(puzzleString.charAt(i)));
         }
         this.decodedPuzzle = result;
@@ -75,10 +105,10 @@ class Puzzle {
     }
 
     // Randomly rotates, mirrors, or inverts the puzzle to create a new variation
-    // @Param {mirror: boolean, invert: boolean, rotate: number} options - Options for shuffling
+    // @Param {horizontalMirror: boolean, verticalMirror: boolean, invert: boolean} options - Options for shuffling
     shuffle(options = {}) {
-        var rotationAmount = options.rotate ?? Math.floor(Math.random() * 3);
-        const doMirror = options.mirror ?? Math.round(Math.random());
+        const doVerticalMirror = options.verticalMirror ?? Math.round(Math.random());
+        const doHorizontalMirror = options.horizontalMirror ?? Math.round(Math.random());
         const doInvert = options.invert ?? Math.round(Math.random());
         if (doInvert)
             this.decodedPuzzle = this.decodedPuzzle.map(value => {
@@ -86,8 +116,8 @@ class Puzzle {
                 if (value === 3) return 1;
                 return value;
             });
-        if (doMirror) {
-            const size = this.getSize();
+        if (doVerticalMirror) {
+            const size = this.getWidth();
             const mirrored = [];
             for (let row = 0; row < size; row++) {
                 for (let col = size - 1; col >= 0; col--) {
@@ -96,15 +126,15 @@ class Puzzle {
             }
             this.decodedPuzzle = mirrored;
         }
-        const size = this.getSize();
-        for (let i = 0; i < rotationAmount; i++) {
-            const rotated = [];
-            for (let r = 0; r < size; r++) {
-                for (let c = 0; c < size; c++) {
-                    rotated.push(this.decodedPuzzle[(size - c - 1) * size + r]);
+        if (doHorizontalMirror) {
+            const size = this.getWidth();
+            const mirrored = [];
+            for (let row = size - 1; row >= 0; row--) {
+                for (let col = 0; col < size; col++) {
+                    mirrored.push(this.decodedPuzzle[row * size + col]);
                 }
             }
-            this.decodedPuzzle = rotated;
+            this.decodedPuzzle = mirrored;
         }
     }
 
@@ -120,10 +150,22 @@ class Puzzle {
         return this.#mistakes;
     }
 
-    // Get side length of the puzzle
-    // @Returns {number} - size of one side of the puzzle
-    getSize() {
-        return Math.floor(Math.sqrt(this.decodedPuzzle.length));
+    // Get wether the puzzle is square
+    // @Returns {boolean} - true if the puzzle is square, false otherwise
+    isSquare() {
+        return this.#sizeX === this.#sizeY;
+    }
+
+    // Get the width of the puzzle
+    // @Returns {number} - The width of the puzzle
+    getWidth() {
+        return this.#sizeX;
+    }
+
+    // Get the height of the puzzle
+    // @Returns {number} - The height of the puzzle
+    getHeight() {
+        return this.#sizeY;
     }
 
     // Get the columns of the puzzle as arrays
@@ -179,20 +221,25 @@ class Puzzle {
         return this.decodedPuzzle;
     }
 
+    // Get the original puzzle string
+    // @Returns {string} - The original puzzle string
+    getRawString() {
+        return this.#puzzleString;
+    }
+
     // Render the puzzle into an HTML element
     // @Param {string} elementId - The id of the HTML element to render the puzzle into
     render(elementId) {
         var gameHolder = document.getElementById(elementId);
         gameHolder.innerHTML = "";
 
-        var size = this.getSize();
-        for (let x = 0; x < size; x++) {
+        for (let x = 0; x < this.#sizeX; x++) {
 
             var cellRow = document.createElement("div");
             cellRow.classList.add("cell-row");
 
-            for (let y = 0; y < size; y++) {
-                var id = x * size + y;
+            for (let y = 0; y < this.#sizeY; y++) {
+                var id = x * this.#sizeY + y;
                 var cell = document.createElement("div");
 
                 cell.classList.add("cell");
@@ -200,6 +247,7 @@ class Puzzle {
 
                 var char = this.getCellValue(id);
                 var cellNumber = Math.floor(char / 4) - 1
+                console.log({ id, char });
 
                 var cellLabel = document.createElement("span");
                 cellLabel.classList.add("cell-label");
@@ -298,7 +346,7 @@ class Puzzle {
             this.#completedCells += 1;
             this.#shownCellsIDs.push([cellId, color]);
         }
-        if (this.#completedCells === this.getSize() ** 2) {
+        if (this.#completedCells === this.#sizeX * this.#sizeY && !this.#isCreativeMode) {
             setTimeout(this.#winCallback, 100);
         }
     }
