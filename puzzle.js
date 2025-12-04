@@ -19,33 +19,33 @@ class Puzzle {
             if (parts.length < 2) {
                 console.error("Invalid puzzle string format");
             } else {
-                if(parts.length == 2){
+                if (parts.length == 2) {
                     // Creative mode square
                     this.#isCreativeMode = true;
                     this.sizeX = parseInt(parts[1]);
                     this.sizeY = this.sizeX;
                     puzzleString = new Array(this.sizeX * this.sizeY).fill("0").join("");
-                }else
-                if (parts.length == 3) {
-                    // Creative mode
-                    this.#isCreativeMode = true;
-                    this.#sizeX = parseInt(parts[1]);
-                    this.#sizeY = parseInt(parts[2]);
-                    puzzleString = new Array(this.#sizeX * this.#sizeY).fill("0").join("");
-                } else {
-
-                    this.#sizeX = parseInt(parts[1]);
-                    this.#sizeY = parseInt(parts[2]);
-
-                    // additional validation to check sizeX and sizeY are valid numbers
-                    if (isNaN(this.#sizeX) || isNaN(this.#sizeY) || this.#sizeX <= 0 || this.#sizeY <= 0) {
-                        console.error("Invalid puzzle size in puzzle string, defaulting to square based on length");
-                        this.#sizeX = Math.sqrt(parts[3].length);
-                        this.#sizeY = this.#sizeX;
+                } else
+                    if (parts.length == 3) {
+                        // Creative mode
+                        this.#isCreativeMode = true;
+                        this.#sizeX = parseInt(parts[1]);
+                        this.#sizeY = parseInt(parts[2]);
+                        puzzleString = new Array(this.#sizeX * this.#sizeY).fill("0").join("");
                     } else {
-                        puzzleString = parts[3];
+
+                        this.#sizeX = parseInt(parts[1]);
+                        this.#sizeY = parseInt(parts[2]);
+
+                        // additional validation to check sizeX and sizeY are valid numbers
+                        if (isNaN(this.#sizeX) || isNaN(this.#sizeY) || this.#sizeX <= 0 || this.#sizeY <= 0) {
+                            console.error("Invalid puzzle size in puzzle string, defaulting to square based on length");
+                            this.#sizeX = Math.sqrt(parts[3].length);
+                            this.#sizeY = this.#sizeX;
+                        } else {
+                            puzzleString = parts[3];
+                        }
                     }
-                }
             }
         }
         this.#puzzleString = puzzleString;
@@ -119,9 +119,7 @@ class Puzzle {
         const doInvert = options.invert ?? Math.round(Math.random());
         if (doInvert)
             this.decodedPuzzle = this.decodedPuzzle.map(value => {
-                if (value === 1) return 3;
-                if (value === 3) return 1;
-                return value;
+                return value ^ (1 << 1);
             });
         if (doVerticalMirror) {
             const size = this.getWidth();
