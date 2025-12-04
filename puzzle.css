@@ -64,7 +64,7 @@
 .cell-btn-red {
     bottom: 0px;
     background-color: #e54e3e55;
-    border-radius: 0 0 15px 15px;
+    border-radius: 15px 15px 0px 0px;
 }
 
 .cell-btn-red:hover {
@@ -74,7 +74,7 @@
 .cell-btn-blue {
     top: 0px;
     background-color: #3897d755;
-    border-radius: 15px 15px 0px 0px;
+    border-radius: 0px 0px 15px 15px;
 }
 
 .cell-btn-blue:hover {

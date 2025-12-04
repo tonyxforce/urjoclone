@@ -285,8 +285,8 @@ class Puzzle {
                 switch (char % 4) {
                     case 0:
                         cell.classList.add("cell-UB");
-                        cell.appendChild(cellButtonRed);
                         cell.appendChild(cellButtonBlue);
+                        cell.appendChild(cellButtonRed);
                         break;
                     case 1:
                         cell.classList.add("cell-blue");
@@ -294,8 +294,8 @@ class Puzzle {
                         break;
                     case 2:
                         cell.classList.add("cell-UR");
-                        cell.appendChild(cellButtonRed);
                         cell.appendChild(cellButtonBlue);
+                        cell.appendChild(cellButtonRed);
                         break;
                     case 3:
                         cell.classList.add("cell-red");
