@@ -11,6 +11,7 @@ You only need to have npm and a fairly modern browser installed
 ## Usage
 
 Clone this repository: `git clone https://github.com/tonyxforce/urjoclone.git`
-Install Typescript: `npm i -g typescript`
-Compile the project `npx tsc`
+Move into it: `cd urjoclone`
+Install Typescript with `npm i -g typescript`
+Compile the project using `npx tsc`
 Either open `index.html` in a browser or use python for example to spin up a local webserver using `python -m http.server 8000` and open [http://localhost:8000](http://localhost:8000) in a browser
