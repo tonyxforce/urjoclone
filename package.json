@@ -1,0 +1,20 @@
+{
+  "name": "urjoclone",
+  "version": "1.0.0",
+  "description": "A clone of the https://urjo.com website cause i want to play it offline on my phone",
+  "homepage": "https://github.com/tonyxforce/urjoclone#readme",
+  "bugs": {
+    "url": "https://github.com/tonyxforce/urjoclone/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonyxforce/urjoclone.git"
+  },
+  "license": "ISC",
+  "author": "tonyxforce",
+  "type": "module",
+  "main": "dist/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
