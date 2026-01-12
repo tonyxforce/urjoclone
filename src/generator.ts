@@ -181,10 +181,8 @@ export class UrjoGenerator {
             throw new Error("Unable to color board with current constraints");
         }
 
-        // Calculate numbers for all cells
-        this.board.calculateAllNumbers();
-
-        // Hide all numbers first
+        // Set all numbers on board to null
+        // Allows numbers to be numbered
         this.board.cells.forEach(cell => {
             if (cell.getNumber() !== null) {
                 cell.number = null;
@@ -192,7 +190,7 @@ export class UrjoGenerator {
         });
 
         // Show only the specified number of numbers
-        const shuffledCells = this.board.cells.sort(() => Math.random() - 0.5);
+        const shuffledCells = this.board.cells.toSorted(() => Math.random() - 0.5);
         let shownCount = 0;
         for (const cell of shuffledCells) {
             if (shownCount >= options.numberOfNumbers!) {
@@ -203,11 +201,9 @@ export class UrjoGenerator {
                 shownCount++;
             }
         }
-
         // Then uncolor cells
-        this.board.cells.sort(() => Math.random() - 0.5); // Shuffle cells
-
-        this.board.cells.forEach(cell => {
+        const shuffledCells2 = this.board.cells.toSorted(() => Math.random() - 0.5); // Shuffle cells
+        shuffledCells2.forEach(cell => {
             this.uncolorCell(cell, options.numberChecks, options.rowChecks, options.identicalChecks, options.contradictionCount, options.maxStepsWithoutInfo);
         })
 
@@ -228,7 +224,7 @@ export class UrjoGenerator {
     uncolorCell(cell: Cell, numberChecks = true, rowChecks = true, identicalChecks = true, contradictionCount = 1, maxStepsWithoutInfo = 4) {
         // Checks if a cell can be uncolored while retaining the information
         // Due to the other color being impossible to be there
-        if (this.canBeColor(cell, invertColor(cell.color), numberChecks, rowChecks, identicalChecks, contradictionCount, contradictionCount, maxStepsWithoutInfo)) {
+        if (this.canBeColor(cell, cell.color, numberChecks, rowChecks, identicalChecks, contradictionCount, contradictionCount, maxStepsWithoutInfo)) {
             return false;
         }
         cell.hidden = true;

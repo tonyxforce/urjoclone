@@ -5,7 +5,7 @@ generator.initBoard(4, 4);
 const generatedBoard = generator.createPuzzle({
     numberOfNumbers: 5,
     contradictionCount: 2,
-    identicalChecks: false
+    identicalChecks: true
 });
 console.log(generatedBoard.toString());
 console.log(generatedBoard.toUrl());
