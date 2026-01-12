@@ -197,7 +197,7 @@ export class UrjoBoard {
     }
 
     getCellAt(x: number, y: number): Cell {
-        const id = x * this.getHeight() + y;
+        const id = x + y * this.getWidth();
         if (id > this.cells.length - 1) throw new Error("Cell position is out of grid!");
         const cell = this.cells[id]!;
         return cell;
