@@ -6,6 +6,11 @@ let counter = 0;
 const weakMap = new WeakMap();
 const getObjectId = (obj: any) => (weakMap.get(obj) ?? (weakMap.set(obj, ++counter) && counter));
 
+function log(...args: any[]) {
+    if (false) // Set to false to disable logging
+        console.log(...args);
+};
+
 function all(arr: Array<boolean>): boolean {
     for (const val of arr) {
         if (!val) return false;
@@ -21,10 +26,10 @@ function none(arr: Array<boolean>): boolean {
 }
 
 export class UrjoGenerator {
-    board: UrjoBoard = new UrjoBoard([]);
+    board: UrjoBoard = new UrjoBoard();
     removedByIdentical: number = 0;
     constructor(board?: UrjoBoard) {
-        this.board = board ?? new UrjoBoard([]);
+        this.board = board ?? this.board
         this.removedByIdentical = 0;
     }
 
@@ -84,94 +89,64 @@ export class UrjoGenerator {
     }
 
     fillBoardBacktracking(randomizeColors: boolean = true): boolean {
-        const cells: Cell[] = [];
-        this.board.getRows().forEach(row => {
-            cells.push(...row.getCells());
-        });
+        const cells: Cell[] = this.board.cells;
 
         const dis = this; // To access the generator in the inner function
 
+        log("Starting fillBoardBacktracking...");
+        log(`Total cells: ${cells.length}`);
+
         function backtrack(index: number = 0) {
+            log(`Backtracking at index: ${index}`);
             if (index >= cells.length) {
+                log("All cells processed. Verifying rows and columns...");
+                for (const row of dis.board.rows) {
+                    if (!row.checkColorCountValid()) {
+                        log("Row check failed.");
+                        log(dis.board.toString())
+                        return false;
+                    }
+                }
+                for (const col of dis.board.cols) {
+                    if (!col.checkColorCountValid()) {
+                        log("Column check failed.");
+                        return false;
+                    }
+                }
+                log("Board successfully filled.");
                 return true;
             }
 
             const currentCell: Cell | null = cells[index] ?? null;
-            if (currentCell == null) throw new Error("Invalid cell index!");
+            if (currentCell == null) {
+                log("Invalid cell index!");
+                throw new Error("Invalid cell index!");
+            }
 
             if (currentCell.color != null) {
+                log(`Cell already colored: ${currentCell.color}`);
                 return backtrack(index + 1);
             }
 
             var colors: Color[] = ["red", "blue"];
-            if (randomizeColors)
-                colors.sort(() => Math.random() - 0.5);
-
-            if (currentCell.row == null || currentCell.column == null)
-                throw new Error("Cannot use on a sole cell!");
-
-            const currentRow = currentCell.row.getCells();
-            const currentCol = currentCell.column.getCells();
-
+            if (randomizeColors) colors.sort(() => Math.random() - 0.5);
 
             for (const color of colors) {
-                const rowSnapshot: Array<Color | null> = currentRow.map(c => c.color);
-                const colSnapshot: Array<Color | null> = currentCol.map(c => c.color);
-
+                log(`Trying color ${color} for cell at (${currentCell.row?.cells.indexOf(currentCell)}, ${currentCell.column?.cells.indexOf(currentCell)})`);
                 currentCell.color = color;
 
-                const rowChanged = currentCell.row.fillHalfFull();
-                const colChanged = currentCell.column.fillHalfFull();
-
-                var checksOk = true;
-                if (!currentCell.row.checkColorCountValid())
-                    checksOk = false;
-                if (!currentCell.column.checkColorCountValid())
-                    checksOk = false;
-
-                if (currentCell.posX > 0)
-                    if (dis.board.rows[currentCell.posX - 1]?._cmp_key() == currentCell.row._cmp_key())
-                        checksOk = false;
-                if (currentCell.posX < dis.board.rows.length - 1)
-                    if (dis.board.rows[currentCell.posX + 1]?._cmp_key() == currentCell.row._cmp_key())
-                        checksOk = false;
-                if (currentCell.posY > 0)
-                    if (dis.board.cols[currentCell.posY - 1]?._cmp_key() == currentCell.column._cmp_key())
-                        checksOk = false;
-                if (currentCell.posY < dis.board.cols.length - 1)
-                    if (dis.board.cols[currentCell.posY + 1]?._cmp_key() == currentCell.column._cmp_key())
-                        checksOk = false;
-
-                if (rowChanged.length > 0 && !nonIdentical(dis.board.rows, currentCell.posX))
-                    checksOk = false;
-                if (rowChanged.length > 0 && !nonIdentical(dis.board.cols, currentCell.posY))
-                    checksOk = false;
-
-                rowChanged.forEach(change => {
-                    if (!dis.board.checkIdentical(change)) {
-                        checksOk = false;
-                    }
-                });
-
-                if (checksOk) {
-                    if (backtrack(index + 1)) {
-                        return true;
-                    }
+                if (currentCell.row && currentCell.column) {
+                    log(`Row valid: ${currentCell.row.checkColorCountValid()}, Column valid: ${currentCell.column.checkColorCountValid()}`);
                 }
-                // Restore snapshots
-                currentRow.forEach((c, i) => {
-                    const color = rowSnapshot[i];
-                    if (color != undefined)
-                        c.color = color;
-                });
-                currentCol.forEach((c, i) => {
-                    const color = colSnapshot[i];
-                    if (color != undefined)
-                        c.color = color;
-                });
+
+                if (backtrack(index + 1)) {
+                    return true;
+                }
+
+                log(`Backtracking: Resetting cell at index ${index}`);
                 currentCell.color = null;
             }
-            return false; // No color worked out
+            return false;
         }
         return backtrack(0);
     }
@@ -194,20 +169,42 @@ export class UrjoGenerator {
     }
 
     createPuzzle(options: {
-        numberChecks: boolean,
-        rowChecks: boolean,
-        identicalChecks: boolean,
-        contradictionCount: number,
-        numberOfNumbers: number,
-        maxStepsWithoutInfo: number
+        numberChecks?: boolean,
+        rowChecks?: boolean,
+        identicalChecks?: boolean,
+        contradictionCount?: number,
+        numberOfNumbers?: number,
+        maxStepsWithoutInfo?: number
     } = { numberChecks: true, rowChecks: true, identicalChecks: true, contradictionCount: 1, numberOfNumbers: 0, maxStepsWithoutInfo: 4 }): UrjoBoard {
-        this.board.rows.forEach(row => {
-            row.fillHalfFull();
-        });
-        this.board.rows.forEach(row => {
-            row.unfill();
+        // First, fill the board with a valid coloring
+        if (!this.fillBoardBacktracking()) {
+            throw new Error("Unable to color board with current constraints");
+        }
+
+        // Calculate numbers for all cells
+        this.board.calculateAllNumbers();
+
+        // Hide all numbers first
+        this.board.cells.forEach(cell => {
+            if (cell.getNumber() !== null) {
+                cell.number = null;
+            }
         });
 
+        // Show only the specified number of numbers
+        const shuffledCells = this.board.cells.sort(() => Math.random() - 0.5);
+        let shownCount = 0;
+        for (const cell of shuffledCells) {
+            if (shownCount >= options.numberOfNumbers!) {
+                break;
+            }
+            if (cell.getNumber() === null) {
+                cell.number = cell.calculateNumber();
+                shownCount++;
+            }
+        }
+
+        // Then uncolor cells
         this.board.cells.sort(() => Math.random() - 0.5); // Shuffle cells
 
         this.board.cells.forEach(cell => {
@@ -219,6 +216,13 @@ export class UrjoGenerator {
 
     initBoard(width: number, height: number) {
         this.board.decodeString(`$${width}$${height}`);
+        this.board.fill(null, null, null);
+        this.board.rows.forEach(row=>{
+            row.calculateMaxColorCount();
+        });
+        this.board.cols.forEach(column=>{
+            column.calculateMaxColorCount();
+        })
     };
 
     uncolorCell(cell: Cell, numberChecks = true, rowChecks = true, identicalChecks = true, contradictionCount = 1, maxStepsWithoutInfo = 4) {
@@ -246,7 +250,7 @@ export class UrjoGenerator {
         var processedIDs: Set<number> = new Set();
         var processedNumbers: Set<number> = new Set();
 
-        while (queue.length > 0) {
+        while (queue.getLength() > 0) {
             var currentCell = queue.popleft()!;
             var currentID = getObjectId(currentCell);
             queuedIDs.delete(currentID);
@@ -385,7 +389,7 @@ class Deque<T> extends Array<T> {
             this[index] = item;
         });
     };
-    get length(): number {
+    getLength(): number {
         return this.items.length;
     }
 }

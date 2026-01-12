@@ -2,14 +2,14 @@ import { Column, Row, Line } from "./lines.js";
 import { Cell, Color } from "./cell.js"
 
 type SurroundingCellsType = {
-    upLeft?: Cell | null,
-    up?: Cell | null,
-    upRight?: Cell | null,
-    left?: Cell | null,
-    right?: Cell | null,
-    downLeft?: Cell | null,
-    down?: Cell | null,
-    downRight?: Cell | null,
+    upLeft?: Cell,
+    up?: Cell,
+    upRight?: Cell,
+    left?: Cell,
+    right?: Cell,
+    downLeft?: Cell,
+    down?: Cell,
+    downRight?: Cell,
 }
 
 class SurroundingCells {
@@ -22,14 +22,7 @@ class SurroundingCells {
     down: Cell | null = null;
     downRight: Cell | null = null;
     constructor(data: SurroundingCellsType = {}) {
-        this.upLeft = data.upLeft ?? null;
-        this.up = data.up ?? null;
-        this.upRight = data.upRight ?? null;
-        this.left = data.left ?? null;
-        this.right = data.right ?? null;
-        this.downLeft = data.downLeft ?? null;
-        this.down = data.down ?? null;
-        this.downRight = data.downRight ?? null;
+        Object.assign(this, data);
     }
     toArray() {
         return [
@@ -50,32 +43,18 @@ export class UrjoBoard {
     rows: Row[] = [];
     cols: Column[] = [];
 
-    numberedCells: number = 0;
     cells: Cell[] = [];
-
-    sizeX: number = 0;
-    sizeY: number = 0;
 
     contradictionCount: number = 0;
 
-    constructor(rows: Row[]) {
-        this.rows = rows;
-        this.cells = [];
-        this.rows.forEach(row => {
-            row.getCells().forEach(cell => {
-                this.cells.push(cell);
-            })
-        })
-    }
+    creativeMode: boolean = false;
 
     getRows() {
         return this.rows;
     }
 
     getWidth(): number {
-        var row0 = this.rows[0];
-        if (row0 === undefined) return 0; // No first row => size is 0
-        return row0.length;
+        return this.cols.length;
     }
 
     getHeight(): number {
@@ -85,17 +64,24 @@ export class UrjoBoard {
     toString() {
         var lines: String[] = [];
         this.getRows().forEach((row) => {
-            var currentRow: string[] = []
-            row.forEach((cell: Cell) => {
+            var line: string[] = []
+            row.cells.forEach((cell: Cell) => {
+                var cellValue = "";
+
+                cellValue += cell.hidden ? "?" : " ";
+
                 var cellColor = cell.getColor();
                 if (cellColor == "red")
-                    currentRow.push("R");
+                    cellValue += "R";
                 else if (cellColor == "blue")
-                    currentRow.push("B")
+                    cellValue += "B";
                 else if (cellColor == null)
-                    currentRow.push(".")
+                    cellValue += ".";
+
+                cellValue += cell.getNumber() != null ? cell.getNumber()!.toString() : " ";
+                line.push(cellValue);
             })
-            lines.push(currentRow.join(" "));
+            lines.push(line.join(" "));
         });
         return lines.join("\n")
     }
@@ -116,12 +102,14 @@ export class UrjoBoard {
         parts.shift(); // Remove the empty string before the first $
         if (parts.length === 1) {
             // Format: $<size> (creative mode square)
+            this.creativeMode = true;
             const size = parseInt(parts[0]!, 10);
             if (isNaN(size) || size <= 0) {
                 throw new Error(`Invalid size: ${parts[0]}`);
             }
             return { sizeX: size, sizeY: size, puzzleData: new Array(size * size).fill("0").join("") };
         } else if (parts.length === 2) {
+            this.creativeMode = true;
             // Format: $<sizeX>$<sizeY> (creative mode rectangle)
             const sizeX = parseInt(parts[0]!, 10);
             const sizeY = parseInt(parts[1]!, 10);
@@ -149,10 +137,8 @@ export class UrjoBoard {
         }
     }
 
-    decodeString(puzzleString: string) {
+    decodeString(puzzleString: string): void {
         const { sizeX, sizeY, puzzleData } = this.parsePuzzleFormat(puzzleString);
-        this.sizeX = sizeX;
-        this.sizeY = sizeY;
         // Decode base36 string to numbers
         const decodedPuzzle = puzzleData.split("").map(char => {
             const index = base36Chars.indexOf(char);
@@ -163,98 +149,105 @@ export class UrjoBoard {
         });
 
         // Ensure we have enough decoded data
-        if (decodedPuzzle.length !== this.sizeX * this.sizeY) {
-            throw new Error(`Decoded puzzle data length (${decodedPuzzle.length}) does not match grid size (${this.sizeX} x ${this.sizeY})`);
+        if (decodedPuzzle.length !== sizeX * sizeY) {
+            throw new Error(`Decoded puzzle data length (${decodedPuzzle.length}) does not match grid size (${sizeX}*${sizeY})`);
         }
 
         // Create columns and set board references
         this.cols = [];
-        for (let y = 0; y < this.sizeY; y++) {
+        for (let y = 0; y < sizeY; y++) {
             this.cols[y] = new Column([]);
             this.cols[y]!.board = this;
         }
 
         this.rows = [];
-        for (let x = 0; x < this.sizeX; x++) {
+        for (let x = 0; x < sizeX; x++) {
             this.rows[x] = new Row([]);
             this.rows[x]!.board = this;
         }
 
-        for (let x = 0; x < this.sizeX; x++) {
-            for (let y = 0; y < this.sizeY; y++) {
-                var value: number = decodedPuzzle[x * this.sizeY + y] as number;
+        for (let x = 0; x < sizeX; x++) {
+            for (let y = 0; y < sizeY; y++) {
+                var value: number = decodedPuzzle[x * sizeY + y]!;
 
-                var color: Color = value >> 4 & 1 ? "blue" : "red";
+                var color: Color | null = value >> 4 & 1 ? "blue" : "red";
+                if (this.creativeMode) color = null;
+
                 var hidden: boolean = !(value & 1);
-                var number: number = value >> 2;
+                var number: number | null = value >> 2;
+                if (number == 0) number == null
 
                 const row = this.rows[x]!;
                 const col = this.cols[y]!;
-                const cell = new Cell(color, number, x, y, hidden, row, col);
+                const cell = new Cell(color, number, hidden, row, col);
 
-                row.push(cell);
-                col.push(cell);
+                row.cells.push(cell);
+                col.cells.push(cell);
+                this.cells.push(cell);
             }
         }
-
-        // Update the flat list of all cells
-        this.cells = this.rows.flatMap(row => row.getCells());
-
     }
 
-    getRawValues() {
+    getRawValues(): Cell[] {
         return this.cells;
     }
 
-    setRawValues(values: Cell[]) {
+    setRawValues(values: Cell[]): void {
         this.cells = values;
     }
 
     getCellAt(x: number, y: number): Cell {
-        const cell = this.cells[x * this.sizeY + y];
-        if (cell == undefined) throw new Error("Invalid cell position!");
+        const id = x * this.getHeight() + y;
+        if (id > this.cells.length - 1) throw new Error("Cell position is out of grid!");
+        const cell = this.cells[id]!;
         return cell;
     }
 
     getSurroundingCells(cell: Cell): SurroundingCells {
-        var cellX = cell.posX;
-        var cellY = cell.posY;
+        if (cell.row == null || cell.column == null) {
+            throw new Error("Cell is not properly linked to row/column!");
+        }
+
+        var cellX = cell.row.cells.indexOf(cell);
+        var cellY = cell.column.cells.indexOf(cell);
+
+        if (cellX == -1 || cellY == -1) throw new Error("Cell is outside of it's row or column!");
 
         var positions = new SurroundingCells();
 
         if (cellY != 0) {
             // Not at top edge
-            positions.up = this.getCellAt(cellX - 1, cellY);
+            positions.up = this.getCellAt(cellX, cellY - 1);
             if (cellX != 0) {
                 // Not at top left corner
                 positions.upLeft = this.getCellAt(cellX - 1, cellY - 1);
             }
-            if (cellX != this.rows[0]?.length) {
-                // Not at top right cornder
-                positions.upRight = this.getCellAt(cellX - 1, cellY + 1);
+            if (cellX != this.getWidth() - 1) {
+                // Not at top right corner
+                positions.upRight = this.getCellAt(cellX + 1, cellY - 1);
             }
         }
 
         if (cellX != 0) {
             // Not at left edge
-            positions.left = this.getCellAt(cellX, cellY - 1);
+            positions.left = this.getCellAt(cellX - 1, cellY);
         }
 
         if (cellX != this.getWidth() - 1) {
             // Not at right edge
-            positions.right = this.getCellAt(cellX, cellY + 1);
+            positions.right = this.getCellAt(cellX + 1, cellY);
         }
 
         if (cellY != this.getHeight() - 1) {
             // Not at bottom edge
-            positions.down = this.getCellAt(cellX + 1, cellY);
+            positions.down = this.getCellAt(cellX, cellY + 1);
             if (cellX != this.getWidth() - 1) {
                 // Not at bottom right corner
-                positions.downRight = this.getCellAt(cellX + 1, cellY);
+                positions.downRight = this.getCellAt(cellX + 1, cellY + 1);
             }
             if (cellX != 0) {
                 // Not at bottom left corner
-                positions.downLeft = this.getCellAt(cellX - 1, cellY - 1)
+                positions.downLeft = this.getCellAt(cellX - 1, cellY + 1)
             }
         }
 
@@ -269,23 +262,30 @@ export class UrjoBoard {
 
     toUrl(): string {
         var cellValues: number[] = [];
-        this.cells.forEach((cell: Cell) => {
-            const color: boolean = cell.getColor() == "red";
-            var number: number | null = cell.getNumber();
-            if (number == null) number = -1;
-            const hidden: boolean = cell.isHidden();
+        this.rows.forEach((row: Row) => {
+            row.cells.forEach((cell) => {
 
-            const value = number << 2 | (color ? 1 : 0) << 1 | (hidden ? 1 : 0);
-            cellValues.push(value)
+                const isRed: boolean = cell.getColor() == "red";
+                var number: number | null = cell.getNumber();
+                if (number == null) number = -1;
+                number++; // Align cell number to charmap
+
+                const revealed: boolean = !cell.isHidden();
+
+                const value = number << 2 | (isRed ? 1 : 0) << 1 | (revealed ? 1 : 0);
+                cellValues.push(value)
+            })
         })
-
         var puzzleString: string = cellValues.map((val: number) => base36Chars[val]).join("")
 
         return puzzleString;
     }
 
     checkIdentical(cell: Cell) {
-        const rIndex = cell.posX;
+        if (cell.column == null || cell.row == null) {
+            throw new Error("Cell is not properly linked to row/column");
+        }
+        const rIndex = cell.row.cells.indexOf(cell);
         if (rIndex > 0) {
             if (this.rows[rIndex - 1]?.getCells() == cell.row?.getCells()) {
                 return false;
@@ -298,4 +298,18 @@ export class UrjoBoard {
         }
         return true;
     }
+
+    fill(width: number | null, height: number | null, color: Color | null) {
+        if (width == null) width = this.getWidth();
+        if (height == null) height = this.getHeight();
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const cell = this.getCellAt(x, y);
+                if (color != null) {
+                    cell.color = color;
+                }
+                cell.hidden = false;
+            }
+        };
+    };
 }

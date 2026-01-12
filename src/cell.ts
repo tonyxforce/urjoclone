@@ -8,9 +8,6 @@ export class Cell {
     hidden: boolean = false;
     number: number | null = null;
 
-    posX: number;
-    posY: number;
-
     row: Row | null = null;
     column: Column | null = null;
 
@@ -110,9 +107,9 @@ export class Cell {
             oppositeColor = "red";
         }
 
-        if(sameCount == requiredSame && uncoloredCount > 0){
-            surroundingCells.forEach((cell: Cell, index: number)=>{
-                if(cell.getColor() == null){
+        if (sameCount == requiredSame && uncoloredCount > 0) {
+            surroundingCells.forEach((cell: Cell, index: number) => {
+                if (cell.getColor() == null) {
                     cell.color = oppositeColor;
                     cell.hidden = false;
                     changedCells.push(cell);
@@ -121,9 +118,9 @@ export class Cell {
             return changedCells;
         }
 
-        if(oppositeCount == requiredOpposite && uncoloredCount > 0){
-            surroundingCells.forEach((cell: Cell, index: number)=>{
-                if(cell.getColor() == null){
+        if (oppositeCount == requiredOpposite && uncoloredCount > 0) {
+            surroundingCells.forEach((cell: Cell, index: number) => {
+                if (cell.getColor() == null) {
                     cell.color = sameColor;
                     cell.hidden = false;
                     changedCells.push(cell);
@@ -132,9 +129,9 @@ export class Cell {
             return changedCells;
         }
 
-        if(sameCount + uncoloredCount == requiredSame && uncoloredCount > 0){
-            surroundingCells.forEach((cell: Cell, index: number)=>{
-                if(cell.getColor() == null){
+        if (sameCount + uncoloredCount == requiredSame && uncoloredCount > 0) {
+            surroundingCells.forEach((cell: Cell, index: number) => {
+                if (cell.getColor() == null) {
                     cell.color = oppositeColor;
                     changedCells.push(cell);
                 }
@@ -145,18 +142,14 @@ export class Cell {
     }
 
     constructor(
-        color: Color,
+        color: Color | null,
         number: number | null,
-        xPos: number,
-        yPos: number,
         hidden: boolean,
         row: Row | null,
         column: Column | null,
     ) {
         this.color = color;
         this.number = number;
-        this.posX = xPos;
-        this.posY = yPos;
         this.hidden = hidden;
         this.row = row;
         this.column = column;
@@ -170,8 +163,9 @@ export function invertColor(color: Color | null): Color | null {
     if (color === "blue") {
         return "red";
     }
-    if(color == null){
+    if (color === null) {
         return null;
     }
-    return "blue"; // This will not run
+
+    throw new Error("Invalid value for color: " + color);
 }

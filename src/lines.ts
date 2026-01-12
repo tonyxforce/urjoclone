@@ -1,14 +1,13 @@
 import { Cell, Color } from "./cell.js";
 import { UrjoBoard } from "./urjoboard.js";
 
-export class Line extends Array<Cell> {
+export class Line {
     type: "row" | "col" | null = null;
     maxColorCount: number;
     cells: Cell[] = [];
     board: UrjoBoard | null = null;
 
     constructor(cells: Cell[], type: "row" | "col" | null = null) {
-        super(...cells);
         this.type = type;
         if (this.type == null) throw new Error("Please don't instantiate Line directly.");
         this.maxColorCount = 0; // Will be set in the next line
@@ -35,7 +34,7 @@ export class Line extends Array<Cell> {
     };
 
     calculateMaxColorCount() {
-        this.maxColorCount = this.getCells().length / 2;
+        this.maxColorCount = Math.ceil(this.getCells().length / 2);
     }
 
     checkColorCountValid(): boolean {
@@ -89,14 +88,12 @@ export class Line extends Array<Cell> {
             cell.hidden = true;
         });
     }
-
-
 }
 
 export class Row extends Line {
     type: "row" = "row";
 
-    constructor(cells: Cell[]) {
+    constructor(cells: Cell[] = []) {
         super(cells, "row");
         this.calculateMaxColorCount();
     }
@@ -105,7 +102,7 @@ export class Row extends Line {
 export class Column extends Line {
     type: "col" = "col";
 
-    constructor(cells: Cell[]) {
+    constructor(cells: Cell[] = []) {
         super(cells, "col");
         this.calculateMaxColorCount();
     }
@@ -148,15 +145,19 @@ export function linesDifferent(line1: Row | Column, line2: typeof line1) {
     return false;
 }
 
-export function getColorCounts(line: (Cell | null)[] | Line): { redCount: number, blueCount: number, uncoloredCount: number } {
+export function getColorCounts(line: Array<Cell | null> | Line): { redCount: number, blueCount: number, uncoloredCount: number, nullCount: number } {
     var redCount = 0;
     var blueCount = 0;
     var uncoloredCount = 0;
+    var nullCount = 0;
     if (line instanceof Line) {
-        line = line.getCells()
+        line = line.getCells();
     }
     line.forEach((cell: Cell | null) => {
-        if (cell == null) return;
+        if (cell == null){
+            nullCount++;
+            return;
+        };
         var color = cell.getColor();
         if (color === "red") {
             redCount++;
@@ -166,5 +167,5 @@ export function getColorCounts(line: (Cell | null)[] | Line): { redCount: number
             uncoloredCount++;
         }
     });
-    return { redCount, blueCount, uncoloredCount };
+    return { redCount, blueCount, uncoloredCount, nullCount };
 }

@@ -1,13 +1,12 @@
 export class Puzzle {
-    #puzzleString;
-    #decodedPuzzle;
+    cells;
     #currentState: number[];
     #mistakes = 0;
     #completedCells = 0;
     #shownCellsIDs: Array<[number, "red" | "blue" | "white"]> = [];
     #isCreativeMode = false;
-    #sizeX = 0;
-    #sizeY = 0;
+    sizeX = 0;
+    sizeY = 0;
     #mistakeCallback = function (mistakeCount: number) { };
     #winCallback = function () { };
 
@@ -23,35 +22,35 @@ export class Puzzle {
                 if (parts.length == 2) {
                     // Creative mode square
                     this.#isCreativeMode = true;
-                    this.#sizeX = parseInt(parts[1] as any);
-                    this.#sizeY = this.#sizeX;
-                    puzzleString = new Array(this.#sizeX * this.#sizeY)
+                    this.sizeX = parseInt(parts[1] as any);
+                    this.sizeY = this.sizeX;
+                    puzzleString = new Array(this.sizeX * this.sizeY)
                         .fill("0")
                         .join("");
                 } else if (parts.length == 3) {
                     // Creative mode
                     this.#isCreativeMode = true;
-                    this.#sizeX = parseInt(parts[1] as any);
-                    this.#sizeY = parseInt(parts[2] as any);
-                    puzzleString = new Array(this.#sizeX * this.#sizeY)
+                    this.sizeX = parseInt(parts[1] as any);
+                    this.sizeY = parseInt(parts[2] as any);
+                    puzzleString = new Array(this.sizeX * this.sizeY)
                         .fill("0")
                         .join("");
                 } else if (parts.length == 4) {
-                    this.#sizeX = parseInt(parts[1] as any);
-                    this.#sizeY = parseInt(parts[2] as any);
+                    this.sizeX = parseInt(parts[1] as any);
+                    this.sizeY = parseInt(parts[2] as any);
 
                     // additional validation to check sizeX and sizeY are valid numbers
                     if (
-                        isNaN(this.#sizeX) ||
-                        isNaN(this.#sizeY) ||
-                        this.#sizeX <= 0 ||
-                        this.#sizeY <= 0
+                        isNaN(this.sizeX) ||
+                        isNaN(this.sizeY) ||
+                        this.sizeX <= 0 ||
+                        this.sizeY <= 0
                     ) {
                         console.error(
                             "Invalid puzzle size in puzzle string, defaulting to square based on length"
                         );
-                        this.#sizeX = Math.sqrt((parts[3] as any).length);
-                        this.#sizeY = this.#sizeX;
+                        this.sizeX = Math.sqrt((parts[3] as any).length);
+                        this.sizeY = this.sizeX;
                     } else {
                         puzzleString = parts[3] as any;
                     }
@@ -60,22 +59,21 @@ export class Puzzle {
                 }
             }
         }
-        this.#puzzleString = puzzleString;
-        if (this.#sizeX == 0 || this.#sizeY == 0) {
-            this.#sizeX = Math.sqrt(puzzleString.length);
-            this.#sizeY = this.#sizeX;
+        if (this.sizeX == 0 || this.sizeY == 0) {
+            this.sizeX = Math.sqrt(puzzleString.length);
+            this.sizeY = this.sizeX;
         }
         const base36Chars =
             "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split(
                 ""
             );
         const result = [];
-        for (var i = 0; i < this.#puzzleString.length; i++) {
+        for (var i = 0; i < puzzleString.length; i++) {
             result.push(base36Chars.indexOf(puzzleString.charAt(i)));
         }
-        this.#decodedPuzzle = result.slice();
+        this.cells = result.slice();
         this.#currentState = result.slice();
-        this.#decodedPuzzle.forEach((color, index) => {
+        this.cells.forEach((color, index) => {
             if (color == 1) {
                 this.#shownCellsIDs.push([index, "blue"]);
             }
@@ -130,46 +128,6 @@ export class Puzzle {
         return rows;
     }
 
-    // Randomly rotates, mirrors, or inverts the puzzle to create a new variation
-    // @Param {horizontalMirror: boolean, verticalMirror: boolean, invert: boolean} options - Options for shuffling
-    shuffle(
-        options: {
-            horizontalMirror?: boolean;
-            verticalMirror?: boolean;
-            invert?: boolean;
-        } = {}
-    ) {
-        const doVerticalMirror =
-            options.verticalMirror ?? Math.round(Math.random());
-        const doHorizontalMirror =
-            options.horizontalMirror ?? Math.round(Math.random());
-        const doInvert = options.invert ?? Math.round(Math.random());
-        if (doInvert)
-            this.#decodedPuzzle = this.#decodedPuzzle.map((value) => {
-                return value ^ (1 << 1);
-            });
-        if (doVerticalMirror) {
-            const size = this.getWidth();
-            const mirrored: Array<number> = [];
-            for (let row = 0; row < size; row++) {
-                for (let col = size - 1; col >= 0; col--) {
-                    mirrored.push(this.#decodedPuzzle[row * size + col] as any);
-                }
-            }
-            this.#decodedPuzzle = mirrored;
-        }
-        if (doHorizontalMirror) {
-            const size = this.getWidth();
-            const mirrored: Array<number> = [];
-            for (let row = size - 1; row >= 0; row--) {
-                for (let col = 0; col < size; col++) {
-                    mirrored.push(this.#decodedPuzzle[row * size + col] as any);
-                }
-            }
-            this.#decodedPuzzle = mirrored;
-        }
-    }
-
     // Set the callback function to be called when a mistake is made
     // @Param {function} callback - The callback function
     setMistakeCallback(callback: (mistakeCount: number) => void) {
@@ -178,26 +136,26 @@ export class Puzzle {
 
     // Get number of mistakes made by the player
     // @Returns {number} - number of mistakes
-    getMistakeCount() {
+    getMistakeCount(): number {
         return this.#mistakes;
     }
 
     // Get wether the puzzle is square
     // @Returns {boolean} - true if the puzzle is square, false otherwise
-    isSquare() {
-        return this.#sizeX === this.#sizeY;
+    isSquare(): boolean {
+        return this.sizeX === this.sizeY;
     }
 
     // Get the width of the puzzle
     // @Returns {number} - The width of the puzzle
-    getWidth() {
-        return this.#sizeX;
+    getWidth(): number {
+        return this.sizeX;
     }
 
     // Get the height of the puzzle
     // @Returns {number} - The height of the puzzle
-    getHeight() {
-        return this.#sizeY;
+    getHeight(): number {
+        return this.sizeY;
     }
 
     // Get the columns of the puzzle as arrays
@@ -227,58 +185,16 @@ export class Puzzle {
         // split the array into N sized chunks
         const size = this.getWidth();
         const rows = [];
-        for (let i = 0; i < this.#decodedPuzzle.length; i += size) {
-            rows.push(this.#decodedPuzzle.slice(i, i + size));
+        for (let i = 0; i < this.cells.length; i += size) {
+            rows.push(this.cells.slice(i, i + size));
         }
         return rows;
-    }
-
-    // Get the current state of the puzzle as a puzzle string
-    // @Returns {string} - The current state of the puzzle as a puzzle string
-    getCurrentState() {
-        const base36Chars =
-            "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split(
-                ""
-            );
-        let result = "";
-        for (let i = 0; i < this.#currentState.length; i++) {
-            var currentChar = this.#currentState[i];
-            if(currentChar === undefined) throw new Error("Current char is undefined");
-            result += base36Chars[currentChar];
-        }
-        return result;
-    }
-
-    // Get the color of a cell by its id
-    // @Param {number} cellId - The id of the cell
-    // @Returns {string} - 'red', 'blue', or 'white'
-    getColor(cellId: number): "red" | "blue" | "white" {
-        const cellValue = this.#decodedPuzzle[cellId];
-        if (cellValue === 1) return "blue";
-        if (cellValue === 3) return "red";
-        if (cellValue === 2 || cellValue === 0) return "white";
-        throw new Error("Cell value is invalid");
-    }
-
-    // Get the raw value of a cell by its id
-    // @Param {number} cellId - The id of the cell
-    // @Returns {number} - The raw value of the cell
-    getCellValue(cellId: number): number {
-        var value = this.#decodedPuzzle[cellId];
-        if(value === undefined) throw new Error("Cell value is undefined");
-        return value;
     }
 
     // Get the decoded puzzle values
     // @Returns {Array} - The decoded puzzle values as an array of numbers
     getRawValues(): number[] {
-        return this.#decodedPuzzle;
-    }
-
-    // Get the original puzzle string
-    // @Returns {string} - The original puzzle string
-    getRawString(): string {
-        return this.#puzzleString;
+        return this.cells;
     }
 
     // Render the puzzle into an HTML element
@@ -290,18 +206,19 @@ export class Puzzle {
         
         gameHolder.innerHTML = "";
 
-        for (let x = 0; x < this.#sizeX; x++) {
+        for (let x = 0; x < this.sizeX; x++) {
             var cellRow = document.createElement("div");
             cellRow.classList.add("cell-row");
 
-            for (let y = 0; y < this.#sizeY; y++) {
-                var id = x * this.#sizeY + y;
+            for (let y = 0; y < this.sizeY; y++) {
+                var id = x * this.sizeY + y;
                 var cell = document.createElement("div");
 
                 cell.classList.add("cell");
                 cell.id = "cell-" + id;
 
-                var char = this.getCellValue(id);
+                var char = this.cells[id];
+                if(char === undefined) throw new Error("Cell character is undefined for id " + id);
                 var cellNumber = Math.floor(char / 4) - 1;
 
                 var cellLabel = document.createElement("span");
@@ -324,10 +241,10 @@ export class Puzzle {
                 cellButtonBlue.id = "blue-" + id;
 
                 cellButtonRed.addEventListener("click", (e) => {
-                    this.#buttonClick(e.target as HTMLButtonElement);
+                    this.buttonClick(e.target as HTMLButtonElement);
                 });
                 cellButtonBlue.addEventListener("click", (e) => {
-                    this.#buttonClick(e.target as HTMLButtonElement);
+                    this.buttonClick(e.target as HTMLButtonElement);
                 });
 
                 cell.appendChild(cellLabel);
@@ -362,8 +279,7 @@ export class Puzzle {
 
     // Internal function that handles button clicks
     // @Param {HTMLElement} cellBtn - The button element that was clicked
-    // @Param {string} color - The color associated with the button click ('red' or 'blue')
-    #buttonClick(cellBtn: HTMLButtonElement) {
+    private buttonClick(cellBtn: HTMLButtonElement) {
         var cellBtnId = cellBtn.id;
         if(!cellBtnId) throw new Error("Cell button ID is undefined");
         if(!cellBtnId.includes("-")) throw new Error("Cell button ID is invalid");
@@ -418,7 +334,7 @@ export class Puzzle {
             this.#shownCellsIDs.push([cellId, color]);
         }
         if (
-            this.#completedCells === this.#sizeX * this.#sizeY &&
+            this.#completedCells === this.sizeX * this.sizeY &&
             !this.#isCreativeMode
         ) {
             setTimeout(this.#winCallback, 100);
